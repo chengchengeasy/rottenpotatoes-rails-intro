@@ -19,15 +19,35 @@ class MoviesController < ApplicationController
 		if params[:ratings]
 		  @ratings = params[:ratings]
 		end
-    
-    columns = {'title'=>'title', 'release_date'=>'release_date'}
-		if columns.has_key?(params[:sortby])
-      @sortby = columns[params[:sortby]]
-      query = Movie.order(@sortby)
-    else
-      query = Movie
+		if params[:commit] == 'Refresh'
+      session[:ratings] = params[:ratings]
+    elsif session[:ratings] != params[:ratings]
+      redirect = true
+      params[:ratings] = session[:ratings]
     end
-    @movies = @ratings.nil? ? query.all : query.with_ratings(@ratings.map { |r| r[0] })
+
+    if params[:sortby]
+      session[:sortby] = params[:sortby]
+    elsif session[:sortby]
+      redirect = true
+      params[:sortby] = session[:sortby]
+		end
+    
+    @ratings, @sortby = session[:ratings], session[:sortby]
+    if redirect
+      flash.keep
+      redirect_to movies_path({:sortby=>@sortby, :ratings=>@ratings})
+    elsif
+      columns = {'title'=>'title', 'release_date'=>'release_date'}
+      if columns.has_key?(@sortby)
+        query = Movie.order(columns[@sortby])
+      else
+        @sortby = nil
+        query = Movie
+      end
+
+      @movies = @ratings.nil? ? query.all : query.with_ratings(@ratings.map { |r| r[0] })
+    end
   end
 
   def new
