@@ -14,15 +14,20 @@ class MoviesController < ApplicationController
   #   @movies = Movie.all
   # end
   def index	
-    @movies = Movie.all
 		@hilite = 'hilite'
+		@all_ratings = Movie.ratings
+		if params[:ratings]
+		  @ratings = params[:ratings]
+		end
+    
     columns = {'title'=>'title', 'release_date'=>'release_date'}
-		if params[:sortby].nil?
-			@movies=Movie.all
-    elsif columns.has_key?(params[:sortby])
+		if columns.has_key?(params[:sortby])
       @sortby = columns[params[:sortby]]
-      @movies = Movie.order(@sortby)
+      query = Movie.order(@sortby)
+    else
+      query = Movie
     end
+    @movies = @ratings.nil? ? query.all : query.with_ratings(@ratings.map { |r| r[0] })
   end
 
   def new
